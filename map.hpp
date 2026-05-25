@@ -3,10 +3,13 @@
 
 #include "constants.hpp"
 
-// 맵 초기화
+// 기본 맵 초기화
 void initMap();
 
+// Stage별 맵 생성
+void initStage(int stage);
+
 // 맵 출력
-void drawMap();
+void drawMap(int stage);
 
 #endif

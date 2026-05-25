@@ -5,8 +5,9 @@
 const int MAP_SIZE = 21;
 
 
-// 맵 요소 정의
+// 맵 요소
 const int EMPTY = 0;
+
 const int WALL = 1;
 const int IMMUNE_WALL = 2;
 
