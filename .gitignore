@@ -69,3 +69,8 @@ Testing/
 .cache/
 
 snake
+.Rhistory
+test_gate
+test_gate.cpp
+test_item
+test_item.cpp
