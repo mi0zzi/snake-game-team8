@@ -51,6 +51,12 @@ void drawPanel(int score, int snakeLen, int elapsedSec, int level);
 void drawScoreBoard(int score, int snakeLen, int growthCount,
                     int poisonCount, int gateCount, int elapsedSec, int level);
 
+// PDF 명세 형식의 점수판을 표시
+//   snakeLen : 현재 뱀 길이
+//   maxLen   : 게임 중 달성한 최대 뱀 길이
+void drawScoreBoard(int score, int snakeLen, int maxLen, int growthCount,
+                    int poisonCount, int gateCount, int elapsedSec, int level);
+
 // 미션 달성 현황을 표시
 // 각 current 값이 target 이상이면 완료 표시
 void drawMissionBoard(int currentLen, int targetLen,

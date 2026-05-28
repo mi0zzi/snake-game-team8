@@ -153,8 +153,16 @@ void drawPanel(int score, int snakeLen, int elapsedSec, int level) {
 
 void drawScoreBoard(int score, int snakeLen, int growthCount,
                     int poisonCount, int gateCount, int elapsedSec, int level) {
+    drawScoreBoard(score, snakeLen, snakeLen, growthCount,
+                   poisonCount, gateCount, elapsedSec, level);
+}
+
+void drawScoreBoard(int score, int snakeLen, int maxLen, int growthCount,
+                    int poisonCount, int gateCount, int elapsedSec, int level) {
     int px = PANEL_X;
     int py = PANEL_Y;
+
+    maxLen = std::max(maxLen, snakeLen);
 
     clearPanelArea();
 
@@ -168,12 +176,12 @@ void drawScoreBoard(int score, int snakeLen, int growthCount,
 
     mvprintw(py + 3,  px, "│ Stage        : %-5d │", level);
     mvprintw(py + 4,  px, "│ Score        : %-5d │", score);
-    mvprintw(py + 5,  px, "│ Length       : %-5d │", snakeLen);
+    mvprintw(py + 5,  px, "│ B Length     : %2d/%-2d │", snakeLen, maxLen);
     mvprintw(py + 6,  px, "│ Time         : %-5s │", formatTime(elapsedSec).c_str());
     mvprintw(py + 7,  px, "├──────────────────────┤");
-    mvprintw(py + 8,  px, "│ Growth Item  : %-5d │", growthCount);
-    mvprintw(py + 9,  px, "│ Poison Item  : %-5d │", poisonCount);
-    mvprintw(py + 10, px, "│ Gate Used    : %-5d │", gateCount);
+    mvprintw(py + 8,  px, "│ + Growth     : %-5d │", growthCount);
+    mvprintw(py + 9,  px, "│ - Poison     : %-5d │", poisonCount);
+    mvprintw(py + 10, px, "│ G Gate       : %-5d │", gateCount);
     mvprintw(py + 11, px, "└──────────────────────┘");
     attroff(COLOR_PAIR(COLOR_UI_PAIR));
 
