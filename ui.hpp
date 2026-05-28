@@ -27,6 +27,7 @@
 //  사이드 패널 위치 (맵 오른쪽)
 #define PANEL_X  (MAP_SIZE * 2 + 2)  // 맵 폭(열 * 2) + 여백
 #define PANEL_Y  0
+#define PANEL_WIDTH  24
 
 //  UI 공개 함수
 
@@ -42,6 +43,32 @@ void drawScreen(const int map[MAP_SIZE][MAP_SIZE]);
 //   elapsedSec : 경과 시간(초)
 //   level      : 현재 스테이지 레벨
 void drawPanel(int score, int snakeLen, int elapsedSec, int level);
+
+// 점수판을 표시
+//   growthCount : 성장 아이템 획득 수
+//   poisonCount : 독 아이템 획득 수
+//   gateCount   : 게이트 통과 수
+void drawScoreBoard(int score, int snakeLen, int growthCount,
+                    int poisonCount, int gateCount, int elapsedSec, int level);
+
+// PDF 명세 형식의 점수판을 표시
+//   snakeLen : 현재 뱀 길이
+//   maxLen   : 게임 중 달성한 최대 뱀 길이
+void drawScoreBoard(int score, int snakeLen, int maxLen, int growthCount,
+                    int poisonCount, int gateCount, int elapsedSec, int level);
+
+// 미션 달성 현황을 표시
+// 각 current 값이 target 이상이면 완료 표시
+void drawMissionBoard(int currentLen, int targetLen,
+                      int growthCount, int targetGrowth,
+                      int poisonCount, int targetPoison,
+                      int gateCount, int targetGate);
+
+// 조작법과 시작 안내 화면을 표시
+void showStartScreen();
+
+// 일시정지 메시지를 화면 중앙에 표시
+void showPauseMessage();
 
 // 게임 오버 메시지를 화면 중앙에 표시하고 키 입력 대기
 void showGameOver(int finalScore, int snakeLen, int elapsedSec);
