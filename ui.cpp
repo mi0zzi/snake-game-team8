@@ -44,25 +44,90 @@ static std::string formatTime(int seconds) {
 }
 
 static const char* missionMark(bool achieved) {
-    return achieved ? "v" : " ";
+    return achieved ? "OK" : "  ";
+}
+
+static void printValue(int y, int x, const char* fmt, int value) {
+    attron(COLOR_PAIR(COLOR_VALUE_PAIR) | A_BOLD);
+    mvprintw(y, x, fmt, value);
+    attroff(COLOR_PAIR(COLOR_VALUE_PAIR) | A_BOLD);
+}
+
+static void printValueText(int y, int x, const char* value) {
+    attron(COLOR_PAIR(COLOR_VALUE_PAIR) | A_BOLD);
+    mvprintw(y, x, "%7s", value);
+    attroff(COLOR_PAIR(COLOR_VALUE_PAIR) | A_BOLD);
+}
+
+static void printMissionLine(int y, const char* label, int current, int target) {
+    int px = PANEL_X;
+    bool achieved = current >= target;
+    int statusColor = achieved ? COLOR_DONE_PAIR : COLOR_UI_PAIR;
+
+    attron(COLOR_PAIR(COLOR_UI_PAIR));
+    mvprintw(y, px, "│ %-8s          [  ] │", label);
+    attroff(COLOR_PAIR(COLOR_UI_PAIR));
+
+    attron(COLOR_PAIR(COLOR_VALUE_PAIR) | A_BOLD);
+    mvprintw(y, px + 11, "%3d/%-3d", current, target);
+    attroff(COLOR_PAIR(COLOR_VALUE_PAIR) | A_BOLD);
+
+    attron(COLOR_PAIR(statusColor) | A_BOLD);
+    mvprintw(y, px + 20, "%s", missionMark(achieved));
+    attroff(COLOR_PAIR(statusColor) | A_BOLD);
 }
 
 static void clearPanelArea() {
-    for (int y = PANEL_Y; y < PANEL_Y + 24; ++y) {
+    for (int y = PANEL_Y; y < PANEL_Y + 28; ++y) {
         move(y, PANEL_X);
         clrtoeol();
     }
 }
 
+static void drawMapFrame() {
+    int top = MAP_ORIGIN_Y - 1;
+    int left = MAP_ORIGIN_X - 1;
+    int right = MAP_ORIGIN_X + MAP_SIZE * 2;
+    int bottom = MAP_ORIGIN_Y + MAP_SIZE;
+
+    attron(COLOR_PAIR(COLOR_PANEL_PAIR) | A_BOLD);
+    mvprintw(top - 1, left + 2, "SNAKE GAME");
+
+    mvaddch(top, left, ACS_ULCORNER);
+    mvaddch(top, right, ACS_URCORNER);
+    mvaddch(bottom, left, ACS_LLCORNER);
+    mvaddch(bottom, right, ACS_LRCORNER);
+
+    for (int x = left + 1; x < right; ++x) {
+        mvaddch(top, x, ACS_HLINE);
+        mvaddch(bottom, x, ACS_HLINE);
+    }
+
+    for (int y = top + 1; y < bottom; ++y) {
+        mvaddch(y, left, ACS_VLINE);
+        mvaddch(y, right, ACS_VLINE);
+    }
+    attron(COLOR_PAIR(COLOR_TITLE_PAIR) | A_BOLD);
+    mvprintw(top - 1, left + 2, "SNAKE GAME");
+    attroff(COLOR_PAIR(COLOR_TITLE_PAIR) | A_BOLD);
+    attroff(COLOR_PAIR(COLOR_PANEL_PAIR) | A_BOLD);
+}
+
 static void drawLegend(int startY) {
     int px = PANEL_X;
 
-    attron(COLOR_PAIR(COLOR_UI_PAIR) | A_BOLD);
+    attron(COLOR_PAIR(COLOR_PANEL_PAIR) | A_BOLD);
     mvprintw(startY,     px, "┌──────────────────────┐");
-    mvprintw(startY + 1, px, "│        LEGEND        │");
+    attroff(COLOR_PAIR(COLOR_PANEL_PAIR) | A_BOLD);
+
+    attron(COLOR_PAIR(COLOR_TITLE_PAIR) | A_BOLD);
+    mvprintw(startY + 1, px, "│       SYMBOLS        │");
+    attroff(COLOR_PAIR(COLOR_TITLE_PAIR) | A_BOLD);
+
+    attron(COLOR_PAIR(COLOR_PANEL_PAIR) | A_BOLD);
     mvprintw(startY + 2, px, "├──────────────────────┤");
     attroff(A_BOLD);
-    attroff(COLOR_PAIR(COLOR_UI_PAIR));
+    attroff(COLOR_PAIR(COLOR_PANEL_PAIR));
 
     attron(COLOR_PAIR(COLOR_HEAD_PAIR));
     mvprintw(startY + 3, px, "│ @  Snake Head        │");
@@ -84,9 +149,9 @@ static void drawLegend(int startY) {
     mvprintw(startY + 7, px, "│ D  Gate              │");
     attroff(COLOR_PAIR(COLOR_GATE_PAIR));
 
-    attron(COLOR_PAIR(COLOR_UI_PAIR));
+    attron(COLOR_PAIR(COLOR_PANEL_PAIR));
     mvprintw(startY + 8, px, "└──────────────────────┘");
-    attroff(COLOR_PAIR(COLOR_UI_PAIR));
+    attroff(COLOR_PAIR(COLOR_PANEL_PAIR));
 }
 
 static void drawCenterBox(const char* title, const char* line1, const char* line2,
@@ -109,17 +174,26 @@ static void drawCenterBox(const char* title, const char* line1, const char* line
 
 
 void initUI() {
+    noecho();
+    curs_set(0);
+    keypad(stdscr, TRUE);
+
     // ncurses 색상 지원 여부 확인 후 색상 쌍 초기화
     if (has_colors()) {
         start_color();
+        use_default_colors();
         init_pair(COLOR_WALL_PAIR,    COLOR_WHITE,   COLOR_BLACK);
         init_pair(COLOR_IWALL_PAIR,   COLOR_CYAN,    COLOR_BLACK);
-        init_pair(COLOR_HEAD_PAIR,    COLOR_GREEN,   COLOR_BLACK);
+        init_pair(COLOR_HEAD_PAIR,    COLOR_YELLOW,  COLOR_BLACK);
         init_pair(COLOR_BODY_PAIR,    COLOR_GREEN,   COLOR_BLACK);
         init_pair(COLOR_GROWTH_PAIR,  COLOR_YELLOW,  COLOR_BLACK);
         init_pair(COLOR_POISON_PAIR,  COLOR_RED,     COLOR_BLACK);
         init_pair(COLOR_GATE_PAIR,    COLOR_MAGENTA, COLOR_BLACK);
         init_pair(COLOR_UI_PAIR,      COLOR_CYAN,    COLOR_BLACK);
+        init_pair(COLOR_TITLE_PAIR,   COLOR_YELLOW,  COLOR_BLACK);
+        init_pair(COLOR_VALUE_PAIR,   COLOR_WHITE,   COLOR_BLACK);
+        init_pair(COLOR_DONE_PAIR,    COLOR_GREEN,   COLOR_BLACK);
+        init_pair(COLOR_PANEL_PAIR,   COLOR_BLUE,    COLOR_BLACK);
     }
 
     clear();
@@ -127,19 +201,24 @@ void initUI() {
 }
 
 void drawScreen(const int map[MAP_SIZE][MAP_SIZE]) {
+    drawMapFrame();
+
     for (int y = 0; y < MAP_SIZE; y++) {
         for (int x = 0; x < MAP_SIZE; x++) {
             int tile      = map[y][x];
             int colorPair = tileColor(tile);
-            int screenX   = x * 2;   // 타일 하나가 2칸 너비
+            int screenY   = MAP_ORIGIN_Y + y;
+            int screenX   = MAP_ORIGIN_X + x * 2;   // 타일 하나가 2칸 너비
 
             if (colorPair != 0)
-                attron(COLOR_PAIR(colorPair));
+                attron(COLOR_PAIR(colorPair) |
+                       (tile == SNAKE_HEAD || tile == GATE ? A_BOLD : 0));
 
-            mvprintw(y, screenX, "%s", tileChar(tile));
+            mvprintw(screenY, screenX, "%s", tileChar(tile));
 
             if (colorPair != 0)
-                attroff(COLOR_PAIR(colorPair));
+                attroff(COLOR_PAIR(colorPair) |
+                        (tile == SNAKE_HEAD || tile == GATE ? A_BOLD : 0));
         }
     }
     refresh();
@@ -166,24 +245,53 @@ void drawScoreBoard(int score, int snakeLen, int maxLen, int growthCount,
 
     clearPanelArea();
 
-    attron(COLOR_PAIR(COLOR_UI_PAIR) | A_BOLD);
+    attron(COLOR_PAIR(COLOR_PANEL_PAIR) | A_BOLD);
 
     mvprintw(py,     px, "┌──────────────────────┐");
+    attroff(COLOR_PAIR(COLOR_PANEL_PAIR) | A_BOLD);
+
+    attron(COLOR_PAIR(COLOR_TITLE_PAIR) | A_BOLD);
     mvprintw(py + 1, px, "│      SCORE BOARD     │");
+    attroff(COLOR_PAIR(COLOR_TITLE_PAIR) | A_BOLD);
+
+    attron(COLOR_PAIR(COLOR_PANEL_PAIR) | A_BOLD);
     mvprintw(py + 2, px, "├──────────────────────┤");
 
     attroff(A_BOLD);
+    attroff(COLOR_PAIR(COLOR_PANEL_PAIR));
 
-    mvprintw(py + 3,  px, "│ Stage        : %-5d │", level);
-    mvprintw(py + 4,  px, "│ Score        : %-5d │", score);
-    mvprintw(py + 5,  px, "│ B Length     : %2d/%-2d │", snakeLen, maxLen);
-    mvprintw(py + 6,  px, "│ Time         : %-5s │", formatTime(elapsedSec).c_str());
-    mvprintw(py + 7,  px, "├──────────────────────┤");
-    mvprintw(py + 8,  px, "│ + Growth     : %-5d │", growthCount);
-    mvprintw(py + 9,  px, "│ - Poison     : %-5d │", poisonCount);
-    mvprintw(py + 10, px, "│ G Gate       : %-5d │", gateCount);
-    mvprintw(py + 11, px, "└──────────────────────┘");
+    attron(COLOR_PAIR(COLOR_UI_PAIR));
+    mvprintw(py + 3,  px, "│ Stage               │");
+    mvprintw(py + 4,  px, "│ Time                │");
+    mvprintw(py + 5,  px, "│ Score               │");
+    mvprintw(py + 6,  px, "│ B Length            │");
     attroff(COLOR_PAIR(COLOR_UI_PAIR));
+
+    printValue(py + 3, px + 15, "%5d", level);
+    printValueText(py + 4, px + 13, formatTime(elapsedSec).c_str());
+    printValue(py + 5, px + 15, "%5d", score);
+
+    attron(COLOR_PAIR(COLOR_VALUE_PAIR) | A_BOLD);
+    mvprintw(py + 6, px + 14, "%3d/%-3d", snakeLen, maxLen);
+    attroff(COLOR_PAIR(COLOR_VALUE_PAIR) | A_BOLD);
+
+    attron(COLOR_PAIR(COLOR_PANEL_PAIR));
+    mvprintw(py + 7,  px, "├──────────────────────┤");
+    attroff(COLOR_PAIR(COLOR_PANEL_PAIR));
+
+    attron(COLOR_PAIR(COLOR_UI_PAIR));
+    mvprintw(py + 8,  px, "│ + Growth            │");
+    mvprintw(py + 9,  px, "│ - Poison            │");
+    mvprintw(py + 10, px, "│ G Gate              │");
+    attroff(COLOR_PAIR(COLOR_UI_PAIR));
+
+    printValue(py + 8,  px + 15, "%5d", growthCount);
+    printValue(py + 9,  px + 15, "%5d", poisonCount);
+    printValue(py + 10, px + 15, "%5d", gateCount);
+
+    attron(COLOR_PAIR(COLOR_PANEL_PAIR));
+    mvprintw(py + 11, px, "└──────────────────────┘");
+    attroff(COLOR_PAIR(COLOR_PANEL_PAIR));
 
     refresh();
 }
@@ -195,22 +303,27 @@ void drawMissionBoard(int currentLen, int targetLen,
     int px = PANEL_X;
     int py = PANEL_Y + 13;
 
-    attron(COLOR_PAIR(COLOR_UI_PAIR) | A_BOLD);
+    attron(COLOR_PAIR(COLOR_PANEL_PAIR) | A_BOLD);
     mvprintw(py,     px, "┌──────────────────────┐");
+    attroff(COLOR_PAIR(COLOR_PANEL_PAIR) | A_BOLD);
+
+    attron(COLOR_PAIR(COLOR_TITLE_PAIR) | A_BOLD);
     mvprintw(py + 1, px, "│     MISSION BOARD    │");
+    attroff(COLOR_PAIR(COLOR_TITLE_PAIR) | A_BOLD);
+
+    attron(COLOR_PAIR(COLOR_PANEL_PAIR) | A_BOLD);
     mvprintw(py + 2, px, "├──────────────────────┤");
     attroff(A_BOLD);
+    attroff(COLOR_PAIR(COLOR_PANEL_PAIR));
 
-    mvprintw(py + 3, px, "│ B  %2d / %-2d       [%s] │",
-             currentLen, targetLen, missionMark(currentLen >= targetLen));
-    mvprintw(py + 4, px, "│ +  %2d / %-2d       [%s] │",
-             growthCount, targetGrowth, missionMark(growthCount >= targetGrowth));
-    mvprintw(py + 5, px, "│ -  %2d / %-2d       [%s] │",
-             poisonCount, targetPoison, missionMark(poisonCount >= targetPoison));
-    mvprintw(py + 6, px, "│ G  %2d / %-2d       [%s] │",
-             gateCount, targetGate, missionMark(gateCount >= targetGate));
+    printMissionLine(py + 3, "B Length", currentLen, targetLen);
+    printMissionLine(py + 4, "+ Growth", growthCount, targetGrowth);
+    printMissionLine(py + 5, "- Poison", poisonCount, targetPoison);
+    printMissionLine(py + 6, "G Gate", gateCount, targetGate);
+
+    attron(COLOR_PAIR(COLOR_PANEL_PAIR));
     mvprintw(py + 7, px, "└──────────────────────┘");
-    attroff(COLOR_PAIR(COLOR_UI_PAIR));
+    attroff(COLOR_PAIR(COLOR_PANEL_PAIR));
 
     refresh();
 }

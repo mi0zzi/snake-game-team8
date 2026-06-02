@@ -13,20 +13,26 @@
 #define COLOR_POISON_PAIR    6   // 독 아이템
 #define COLOR_GATE_PAIR      7   // 게이트
 #define COLOR_UI_PAIR        8   // 사이드 UI 패널
+#define COLOR_TITLE_PAIR     9   // 제목
+#define COLOR_VALUE_PAIR     10  // 점수 값
+#define COLOR_DONE_PAIR      11  // 미션 완료
+#define COLOR_PANEL_PAIR     12  // 패널 테두리
 
 //  맵 타일 출력 문자
 #define CHAR_WALL      "■"
 #define CHAR_IWALL     "▩"
-#define CHAR_HEAD      "@ "
-#define CHAR_BODY      "o "
+#define CHAR_HEAD      "● "
+#define CHAR_BODY      "○ "
 #define CHAR_GROWTH    "G "
 #define CHAR_POISON    "P "
 #define CHAR_GATE      "D "
 #define CHAR_EMPTY     "  "
 
-//  사이드 패널 위치 (맵 오른쪽)
-#define PANEL_X  (MAP_SIZE * 2 + 2)  // 맵 폭(열 * 2) + 여백
-#define PANEL_Y  0
+//  맵과 사이드 패널 위치
+#define MAP_ORIGIN_X  2
+#define MAP_ORIGIN_Y  3
+#define PANEL_X  (MAP_ORIGIN_X + MAP_SIZE * 2 + 5)
+#define PANEL_Y  2
 #define PANEL_WIDTH  24
 
 //  UI 공개 함수
