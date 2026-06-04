@@ -59,37 +59,33 @@ void initStage(int stage) {
     // ====================
     else if (stage == 2) {
 
-    // 가장 위
-    gameMap[4][10] = WALL;
+        // 30x30 맵 중앙에 맞춘 확장 Crystal 구조
+        const int c = MAP_SIZE / 2;
 
-    // 위 중간
-    for (int x = 8; x <= 12; x++) {
-        gameMap[6][x] = WALL;
+        gameMap[5][c] = WALL;
+
+        for (int x = c - 3; x <= c + 3; x++) {
+            gameMap[8][x] = WALL;
+        }
+
+        for (int x = c - 6; x <= c + 6; x++) {
+            gameMap[11][x] = WALL;
+        }
+
+        for (int x = c - 9; x <= c + 9; x++) {
+            gameMap[14][x] = WALL;
+        }
+
+        for (int x = c - 6; x <= c + 6; x++) {
+            gameMap[17][x] = WALL;
+        }
+
+        for (int x = c - 3; x <= c + 3; x++) {
+            gameMap[20][x] = WALL;
+        }
+
+        gameMap[23][c] = WALL;
     }
-
-    // 중앙 위
-    for (int x = 6; x <= 14; x++) {
-        gameMap[8][x] = WALL;
-    }
-
-    // 중앙
-    for (int x = 4; x <= 16; x++) {
-        gameMap[10][x] = WALL;
-    }
-
-    // 중앙 아래
-    for (int x = 6; x <= 14; x++) {
-        gameMap[12][x] = WALL;
-    }
-
-    // 아래 중간
-    for (int x = 8; x <= 12; x++) {
-        gameMap[14][x] = WALL;
-    }
-
-    // 가장 아래
-    gameMap[16][10] = WALL;
-}
 
 
     // ====================
@@ -97,38 +93,39 @@ void initStage(int stage) {
     // ====================
     else if (stage == 3) {
 
-        // 왼쪽 링
-        for (int x = 3; x <= 8; x++) {
+        // 30x30 맵 중앙에 맞춘 확장 Infinity 구조
+        for (int x = 4; x <= 12; x++) {
 
-            gameMap[6][x] = WALL;
-            gameMap[14][x] = WALL;
+            gameMap[8][x] = WALL;
+            gameMap[20][x] = WALL;
         }
 
-        for (int y = 7; y <= 13; y++) {
+        for (int y = 9; y <= 19; y++) {
 
-            gameMap[y][3] = WALL;
-            gameMap[y][8] = WALL;
+            gameMap[y][4] = WALL;
+            gameMap[y][12] = WALL;
         }
 
 
         // 오른쪽 링
-        for (int x = 12; x <= 17; x++) {
+        for (int x = 17; x <= 25; x++) {
 
-            gameMap[6][x] = WALL;
-            gameMap[14][x] = WALL;
+            gameMap[8][x] = WALL;
+            gameMap[20][x] = WALL;
         }
 
-        for (int y = 7; y <= 13; y++) {
+        for (int y = 9; y <= 19; y++) {
 
-            gameMap[y][12] = WALL;
             gameMap[y][17] = WALL;
+            gameMap[y][25] = WALL;
         }
 
 
         // 가운데 연결 벽
-        gameMap[9][9] = WALL;
-        gameMap[10][10] = WALL;
-        gameMap[11][11] = WALL;
+        gameMap[13][13] = WALL;
+        gameMap[14][14] = WALL;
+        gameMap[15][15] = WALL;
+        gameMap[16][16] = WALL;
     }
 
 
@@ -137,43 +134,43 @@ void initStage(int stage) {
     // ====================
     else if (stage == 4) {
 
-        // 바깥쪽 벽
-        for (int x = 3; x <= 17; x++) {
-            gameMap[3][x] = WALL;
+        // 30x30 맵 중앙에 맞춘 확장 Spiral 구조
+        for (int x = 4; x <= 25; x++) {
+            gameMap[4][x] = WALL;
         }
 
-        for (int y = 3; y <= 17; y++) {
-            gameMap[y][17] = WALL;
+        for (int y = 4; y <= 25; y++) {
+            gameMap[y][25] = WALL;
         }
 
-        for (int x = 5; x <= 17; x++) {
-            gameMap[17][x] = WALL;
+        for (int x = 7; x <= 25; x++) {
+            gameMap[25][x] = WALL;
         }
 
-        for (int y = 6; y <= 17; y++) {
-            gameMap[y][5] = WALL;
+        for (int y = 8; y <= 25; y++) {
+            gameMap[y][7] = WALL;
         }
 
 
         // 안쪽 Spiral 구조
-        for (int x = 5; x <= 14; x++) {
-            gameMap[6][x] = WALL;
+        for (int x = 7; x <= 21; x++) {
+            gameMap[8][x] = WALL;
         }
 
-        for (int y = 6; y <= 14; y++) {
-            gameMap[y][14] = WALL;
+        for (int y = 8; y <= 21; y++) {
+            gameMap[y][21] = WALL;
         }
 
-        for (int x = 8; x <= 14; x++) {
-            gameMap[14][x] = WALL;
+        for (int x = 11; x <= 21; x++) {
+            gameMap[21][x] = WALL;
         }
 
-        for (int y = 9; y <= 14; y++) {
-            gameMap[y][8] = WALL;
+        for (int y = 12; y <= 21; y++) {
+            gameMap[y][11] = WALL;
         }
 
-        for (int x = 8; x <= 11; x++) {
-            gameMap[9][x] = WALL;
+        for (int x = 11; x <= 17; x++) {
+            gameMap[12][x] = WALL;
         }
     }
 }
@@ -194,13 +191,13 @@ void drawMap(int stage) {
             // 일반 벽 출력
             if (gameMap[y][x] == WALL) {
 
-                mvaddwstr(y + 3, x * 2 + 5, L"■");
+                mvprintw(y + 3, x * 2 + 5, "■ ");
             }
 
             // Immune Wall 출력
             else if (gameMap[y][x] == IMMUNE_WALL) {
 
-                mvaddwstr(y + 3, x * 2 + 5, L"□");
+                mvprintw(y + 3, x * 2 + 5, "▩ ");
             }
 
             // 빈 공간 출력
@@ -211,3 +208,10 @@ void drawMap(int stage) {
         }
     }
 }
+
+/*
+병합 시작 버전과 비교한 변경점:
+- MAP_SIZE가 30으로 확장된 것에 맞춰 Stage 2 Crystal, Stage 3 Infinity, Stage 4 Spiral 장애물 좌표를 30x30 중앙 기준으로 재배치
+- 기존 21x21 기준으로 작게 배치되던 장애물 패턴을 더 큰 맵에 맞게 확장
+- drawMap()의 벽 출력도 UI와 동일하게 2칸 폭 문자로 맞춰 잔상과 정렬 문제 완화
+*/
