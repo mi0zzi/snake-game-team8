@@ -17,15 +17,19 @@
 #define COLOR_VALUE_PAIR     10  // 점수 값
 #define COLOR_DONE_PAIR      11  // 미션 완료
 #define COLOR_PANEL_PAIR     12  // 패널 테두리
+#define COLOR_FEVER_PAIR     13  // 피버 아이템
+#define COLOR_DANGER_PAIR    14  // 조건부 게이트
 
 //  맵 타일 출력 문자
-#define CHAR_WALL      "■"
-#define CHAR_IWALL     "▩"
+#define CHAR_WALL      "■ "
+#define CHAR_IWALL     "▩ "
 #define CHAR_HEAD      "● "
 #define CHAR_BODY      "○ "
-#define CHAR_GROWTH    "G "
-#define CHAR_POISON    "P "
-#define CHAR_GATE      "D "
+#define CHAR_GROWTH    "+ "
+#define CHAR_POISON    "- "
+#define CHAR_GATE      "G "
+#define CHAR_FEVER     "F "
+#define CHAR_DANGER_GATE "! "
 #define CHAR_EMPTY     "  "
 
 //  맵과 사이드 패널 위치
@@ -76,8 +80,8 @@ void showStartScreen();
 // 일시정지 메시지를 화면 중앙에 표시
 void showPauseMessage();
 
-// 게임 오버 메시지를 화면 중앙에 표시하고 키 입력 대기
-void showGameOver(int finalScore, int snakeLen, int elapsedSec);
+// 게임 오버 메시지를 화면 중앙에 표시하고 입력 키를 반환
+int showGameOver(int finalScore, int snakeLen, int elapsedSec);
 
 // 게임 클리어(목표 달성) 메시지 표시
 void showGameClear(int finalScore, int elapsedSec);
@@ -86,3 +90,11 @@ void showGameClear(int finalScore, int elapsedSec);
 void cleanupUI();
 
 #endif // UI_HPP
+
+/*
+병합 시작 버전과 비교한 변경점:
+- 피버 아이템과 길이 5 조건부 게이트를 구분해서 표시하기 위한 색상 상수와 출력 문자 추가
+- 게임오버 화면에서 입력된 키를 main.cpp가 받을 수 있도록 showGameOver() 반환형을 int로 변경
+- 성장 아이템, 독 아이템, 일반 게이트, 조건부 게이트 기호를 +, -, G, !로 통일
+- 벽과 면역벽 문자도 2칸을 차지하도록 바꿔 이전 프레임 문자가 남는 잔상 문제 해결
+*/
