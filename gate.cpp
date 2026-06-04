@@ -1,12 +1,12 @@
 #include "gate.hpp"
 
-// 주어진 벽 목록에서 무작위로 두 곳을 선택해 한 쌍의 게이트 생성
+// 주어진 유효한 벽 목록(validWalls)에서 무작위로 2곳을 골라 게이트 한 쌍을 생성
 void GateManager::generateGates(const std::vector<GatePosition>& validWalls, const std::vector<std::vector<int>>& mapData) {
-    // [보완] 컴파일러의 미사용 파라미터 경고를 방지하기 위해 의도적으로 명시
-    (void)mapData; 
+    (void)mapData;
 
-    int wallCount = validWalls.size();
+    const int wallCount = (int)validWalls.size();
     
+    // 유효한 벽이 2개 미만일 경우 게이트를 생성할 수 없으므로 비활성화 처리
     if (wallCount < 2) {
         gateA = {-1, -1};
         gateB = {-1, -1};
@@ -14,28 +14,33 @@ void GateManager::generateGates(const std::vector<GatePosition>& validWalls, con
         return;
     }
 
-    int idxA = rand() % wallCount;
+    const int idxA = rand() % wallCount;
     int idxB = rand() % wallCount;
-
+    
+    // 두 게이트가 같은 벽에 생성되지 않도록 중복 방지 루프
     while (idxA == idxB) {
         idxB = rand() % wallCount;
     }
 
     gateA = validWalls[idxA];
     gateB = validWalls[idxB];
-    
     isActive = true;
     lifetime = GATE_LIFETIME;
+
+    // 10% 확률로 조건부(길이 5 이상) 게이트 생성, 90% 확률로 일반 게이트 생성
+    const int typeRoll = rand() % 100;
+    gateType = (typeRoll < 10) ? LEN5_GATE : NORMAL_GATE; 
 }
 
-// 뱀 머리가 진입한 게이트 좌표를 확인하여 반대편 출구 좌표 반환
+// 뱀이 진입한 게이트 좌표를 확인하여 반대편 출구 좌표를 반환
 GatePosition GateManager::getExitGate(int headX, int headY) const {
+    if (!isActive) return {-1, -1};
     if (gateA.x == headX && gateA.y == headY) return gateB;
     if (gateB.x == headX && gateB.y == headY) return gateA;
     return {-1, -1};
 }
 
-// 가장자리 테두리에 위치한 게이트의 맵 안쪽 방향(상하좌우 고정) 진출 계산
+// 맵 가장자리 테두리에 위치한 게이트의 안쪽 진출 방향 계산 (상하좌우 고정)
 Direction GateManager::getEdgeExitDirection(GatePosition exitGate, int mapWidth, int mapHeight) const {
     if (exitGate.y == 0) return DOWN;
     if (exitGate.y == mapHeight - 1) return UP;
@@ -44,37 +49,34 @@ Direction GateManager::getEdgeExitDirection(GatePosition exitGate, int mapWidth,
     return NONE_DIR;
 }
 
-// 내부 벽에 위치한 게이트 진출 시, 진입 방향 기준 우선순위(직진->우->좌->후진)로 장애물 없는 빈 방향 계산
+// 맵 내부 벽에 위치한 게이트 진출 방향 계산 (우선순위: 직진 -> 우회전 -> 좌회전 -> 후진)
 Direction GateManager::getInnerExitDirection(Direction entryDir, GatePosition exitGate, const std::vector<std::vector<int>>& mapData) const {
-    // [보완] 방향 값이 없거나 맵 데이터가 비어있어 프로그램이 강제 종료되는 상황을 사전 차단
     if (entryDir == NONE_DIR) return NONE_DIR;
     if (mapData.empty() || mapData[0].empty()) return NONE_DIR;
 
-    // [보완] 맵 크기를 동적으로 계산하여 하드코딩으로 인한 버그 방지
-    int mapH = (int)mapData.size();
-    int mapW = (int)mapData[0].size();
+    const int mapH = (int)mapData.size();
+    const int mapW = (int)mapData[0].size();
 
-    int dx[4] = {0, 1, 0, -1};
-    int dy[4] = {-1, 0, 1, 0};
-
-    int checkOrder[4] = {
+    const int dx[4] = {0, 1, 0, -1};
+    const int dy[4] = {-1, 0, 1, 0};
+    const int checkOrder[4] = {
         entryDir,
         (entryDir + 1) % 4,
         (entryDir + 3) % 4,
         (entryDir + 2) % 4
     };
 
+    // 설정된 우선순위에 따라 4방향을 검사하여 빈 공간(장애물이 없는 곳)을 찾음
     for (int i = 0; i < 4; ++i) {
-        int dir = checkOrder[i];
-        int nextX = exitGate.x + dx[dir];
-        int nextY = exitGate.y + dy[dir];
+        const int dir = checkOrder[i];
+        const int nextX = exitGate.x + dx[dir];
+        const int nextY = exitGate.y + dy[dir];
 
-        // [보완] 다음 칸 좌표가 맵 경계를 벗어나면 검사하지 않고 다음 방향으로 넘김
-        if (nextX < 0 || nextX >= mapW || nextY < 0 || nextY >= mapH) continue; 
+        if (nextX < 0 || nextX >= mapW || nextY < 0 || nextY >= mapH) continue;
 
-        // [보완] 일반 벽, 면역 벽, 뱀 몸통이 아닐 때만 진출 가능하도록 예외 처리
-        int cell = mapData[nextY][nextX];
-        if (cell != 1 && cell != 2 && cell != 4) { 
+        const int cell = mapData[nextY][nextX];
+        // 1(벽), 2(면역 벽), 4(뱀 몸통)가 아닌 통과 가능한 칸일 경우 방향 반환
+        if (cell != 1 && cell != 2 && cell != 4) {
             return static_cast<Direction>(dir);
         }
     }
@@ -82,20 +84,46 @@ Direction GateManager::getInnerExitDirection(Direction entryDir, GatePosition ex
     return entryDir;
 }
 
-// 매 턴마다 게이트 수명을 관리하고, 통과 중이 아닐 때 수명이 0이 되면 삭제 후 재생성
+// 매 턴 호출되어 게이트 수명 차감, 소멸 처리 및 재생성 타이밍(쿨다운)을 관리
 void GateManager::updateGates(const std::vector<GatePosition>& validWalls, const std::vector<std::vector<int>>& mapData, bool isSnakePassing) {
-    if (!isActive) {
-        generateGates(validWalls, mapData);
-        return;
-    }
+    if (isActive) {
+        // 뱀이 게이트를 통과하는 중(머리는 들어갔고 꼬리는 덜 나온 상태)에는 수명 차감을 정지
+        if (!isSnakePassing) lifetime--;
 
-    if (!isSnakePassing) {
-        lifetime--;
-        
         if (lifetime <= 0) {
             gateA = {-1, -1};
             gateB = {-1, -1};
             isActive = false;
+            respawnCooldown = RESPAWN_DELAY_TURNS; // 즉시 생성하지 않고 1턴 공백기 부여
         }
+        return;
     }
+
+    // 게이트 공백기(쿨다운) 처리
+    if (respawnCooldown > 0) {
+        respawnCooldown--;
+        return; // 쿨다운이 끝날 때까지 생성을 보류하고 턴 종료
+    }
+
+    // 쿨다운이 0이 되면 새로운 게이트 쌍 생성
+    generateGates(validWalls, mapData);
+}
+
+// 특정 좌표가 현재 열려있는 게이트의 위치인지 확인
+bool GateManager::isGateCell(int x, int y) const {
+    if (!isActive) return false;
+    if (gateA.x == x && gateA.y == y) return true;
+    if (gateB.x == x && gateB.y == y) return true;
+    return false;
+}
+
+// 현재 생성된 게이트의 타입과 뱀의 길이를 비교하여 진입 가능 여부를 최종 판정
+bool GateManager::canPassConditionalGate(int snakeLength) const {
+    if (!isActive) return false; 
+    
+    // 조건부 게이트일 경우 뱀의 길이가 5 이상인지 검사
+    if (gateType == LEN5_GATE) return snakeLength >= 5;
+    
+    // 일반 게이트일 경우 조건 없이 무조건 통과 허용
+    return true;
 }
