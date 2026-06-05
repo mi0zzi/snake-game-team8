@@ -109,8 +109,11 @@ static void printMissionLine(int y, const char* symbol, const char* label,
 
     attron(COLOR_PAIR(symbolColor) | A_BOLD);
     mvprintw(y, px + 2, "%s", symbol);
-    mvprintw(y, px + 5, "%-7s", label);
     attroff(COLOR_PAIR(symbolColor) | A_BOLD);
+
+    attron(COLOR_PAIR(COLOR_UI_PAIR));
+    mvprintw(y, px + 5, "%-7s", label);
+    attroff(COLOR_PAIR(COLOR_UI_PAIR));
 
     attron(COLOR_PAIR(COLOR_VALUE_PAIR) | A_BOLD);
     mvprintw(y, px + 13, "%3d/%-3d", current, target);
@@ -184,13 +187,18 @@ static void drawLegend(int startY) {
     mvprintw(startY + 4, px, "│ o  Snake Body        │");
     attroff(COLOR_PAIR(COLOR_BODY_PAIR));
 
-    attron(COLOR_PAIR(COLOR_GROWTH_PAIR));
-    mvprintw(startY + 5, px, "│ +  Growth Item       │");
-    attroff(COLOR_PAIR(COLOR_GROWTH_PAIR));
+    attron(COLOR_PAIR(COLOR_UI_PAIR));
+    mvprintw(startY + 5, px, "│    Growth Item       │");
+    mvprintw(startY + 6, px, "│    Poison Item       │");
+    attroff(COLOR_PAIR(COLOR_UI_PAIR));
 
-    attron(COLOR_PAIR(COLOR_POISON_PAIR));
-    mvprintw(startY + 6, px, "│ -  Poison Item       │");
-    attroff(COLOR_PAIR(COLOR_POISON_PAIR));
+    attron(COLOR_PAIR(COLOR_GROWTH_PAIR) | A_BOLD);
+    mvprintw(startY + 5, px + 2, CHAR_GROWTH);
+    attroff(COLOR_PAIR(COLOR_GROWTH_PAIR) | A_BOLD);
+
+    attron(COLOR_PAIR(COLOR_POISON_PAIR) | A_BOLD);
+    mvprintw(startY + 6, px + 2, CHAR_POISON);
+    attroff(COLOR_PAIR(COLOR_POISON_PAIR) | A_BOLD);
 
     attron(COLOR_PAIR(COLOR_GATE_PAIR));
     mvprintw(startY + 7, px, "│ G  Gate              │");
@@ -200,8 +208,12 @@ static void drawLegend(int startY) {
     mvprintw(startY + 8, px, "│ F  Fever Item        │");
     attroff(COLOR_PAIR(COLOR_FEVER_PAIR) | A_BOLD);
 
+    attron(COLOR_PAIR(COLOR_UI_PAIR));
+    mvprintw(startY + 9, px, "│    Len 5 Gate        │");
+    attroff(COLOR_PAIR(COLOR_UI_PAIR));
+
     attron(COLOR_PAIR(COLOR_DANGER_PAIR) | A_BOLD);
-    mvprintw(startY + 9, px, "│ !  Len 5 Gate        │");
+    mvprintw(startY + 9, px + 2, "! ");
     attroff(COLOR_PAIR(COLOR_DANGER_PAIR) | A_BOLD);
 
     attron(COLOR_PAIR(COLOR_PANEL_PAIR));
@@ -241,12 +253,15 @@ void initUI() {
     if (has_colors()) {
         start_color();
         use_default_colors();
+        if (can_change_color()) {
+            init_color(COLOR_YELLOW, 1000, 900, 0);
+        }
         init_pair(COLOR_WALL_PAIR,    COLOR_WHITE,   COLOR_BLACK);
         init_pair(COLOR_IWALL_PAIR,   COLOR_CYAN,    COLOR_BLACK);
         init_pair(COLOR_HEAD_PAIR,    COLOR_YELLOW,  COLOR_BLACK);
         init_pair(COLOR_BODY_PAIR,    COLOR_GREEN,   COLOR_BLACK);
-        init_pair(COLOR_GROWTH_PAIR,  COLOR_YELLOW,  COLOR_BLACK);
-        init_pair(COLOR_POISON_PAIR,  COLOR_RED,     COLOR_BLACK);
+        init_pair(COLOR_GROWTH_PAIR,  COLOR_YELLOW,  COLOR_GREEN);
+        init_pair(COLOR_POISON_PAIR,  COLOR_WHITE,   COLOR_RED);
         init_pair(COLOR_GATE_PAIR,    COLOR_MAGENTA, COLOR_BLACK);
         init_pair(COLOR_UI_PAIR,      COLOR_CYAN,    COLOR_BLACK);
         init_pair(COLOR_TITLE_PAIR,   COLOR_YELLOW,  COLOR_BLACK);
@@ -254,7 +269,10 @@ void initUI() {
         init_pair(COLOR_DONE_PAIR,    COLOR_GREEN,   COLOR_BLACK);
         init_pair(COLOR_PANEL_PAIR,   COLOR_BLUE,    COLOR_BLACK);
         init_pair(COLOR_FEVER_PAIR,   COLOR_CYAN,    COLOR_BLACK);
-        init_pair(COLOR_DANGER_PAIR,  COLOR_RED,     COLOR_BLACK);
+        init_pair(COLOR_DANGER_PAIR,  COLOR_MAGENTA, COLOR_BLACK);
+        init_pair(COLOR_GAMEOVER_PAIR, COLOR_RED,    COLOR_BLACK);
+        init_pair(COLOR_GROWTH_TEXT_PAIR, COLOR_GREEN, COLOR_BLACK);
+        init_pair(COLOR_POISON_TEXT_PAIR, COLOR_RED,   COLOR_BLACK);
     }
 
     clear();
@@ -386,10 +404,10 @@ void drawMissionBoard(int currentLen, int targetLen,
 
     printMissionLine(py + 3, "B", "Length", currentLen, targetLen,
                      COLOR_BODY_PAIR);
-    printMissionLine(py + 4, CHAR_GROWTH, "Growth", growthCount, targetGrowth,
-                     COLOR_GROWTH_PAIR);
-    printMissionLine(py + 5, CHAR_POISON, "Poison", poisonCount, targetPoison,
-                     COLOR_POISON_PAIR);
+    printMissionLine(py + 4, "+", "Growth", growthCount, targetGrowth,
+                     COLOR_GROWTH_TEXT_PAIR);
+    printMissionLine(py + 5, "-", "Poison", poisonCount, targetPoison,
+                     COLOR_POISON_TEXT_PAIR);
     printMissionLine(py + 6, CHAR_GATE, "Gate", gateCount, targetGate,
                      COLOR_GATE_PAIR);
 
@@ -446,7 +464,7 @@ int showGameOver(int finalScore, int snakeLen, int elapsedSec) {
     snprintf(lengthText, sizeof(lengthText), "Length: %d", snakeLen);
     snprintf(timeText, sizeof(timeText), "Time  : %s", formatTime(elapsedSec).c_str());
 
-    attron(COLOR_PAIR(COLOR_POISON_PAIR) | A_BOLD);
+    attron(COLOR_PAIR(COLOR_GAMEOVER_PAIR) | A_BOLD);
     mvprintw(centerY,     centerX, "┌──────────────────────┐");
     printPopupTitle(centerY + 1, centerX, "GAME OVER");
     mvprintw(centerY + 2, centerX, "├──────────────────────┤");
@@ -457,7 +475,7 @@ int showGameOver(int finalScore, int snakeLen, int elapsedSec) {
     mvprintw(centerY + 6, centerX, "├──────────────────────┤");
     printPopupLine(centerY + 7, centerX, "R Restart / Q Quit");
     mvprintw(centerY + 8, centerX, "└──────────────────────┘");
-    attroff(COLOR_PAIR(COLOR_POISON_PAIR));
+    attroff(COLOR_PAIR(COLOR_GAMEOVER_PAIR));
 
     refresh();
     while (true) {
@@ -481,7 +499,7 @@ void showGameClear(int finalScore, int elapsedSec) {
     snprintf(scoreText, sizeof(scoreText), "Score : %d", finalScore);
     snprintf(timeText, sizeof(timeText), "Time  : %s", formatTime(elapsedSec).c_str());
 
-    attron(COLOR_PAIR(COLOR_GROWTH_PAIR) | A_BOLD);
+    attron(COLOR_PAIR(COLOR_DONE_PAIR) | A_BOLD);
     mvprintw(centerY,     centerX, "┌──────────────────────┐");
     printPopupTitle(centerY + 1, centerX, "GAME CLEAR");
     mvprintw(centerY + 2, centerX, "├──────────────────────┤");
@@ -491,7 +509,7 @@ void showGameClear(int finalScore, int elapsedSec) {
     mvprintw(centerY + 5, centerX, "├──────────────────────┤");
     printPopupLine(centerY + 6, centerX, "Press any key...");
     mvprintw(centerY + 7, centerX, "└──────────────────────┘");
-    attroff(COLOR_PAIR(COLOR_GROWTH_PAIR));
+    attroff(COLOR_PAIR(COLOR_DONE_PAIR));
 
     refresh();
     getch();
@@ -508,6 +526,8 @@ void cleanupUI() {
 - drawScreen()에서 FEVER_ITEM과 CONDITIONAL_GATE를 인식해 각각 다른 기호와 색으로 출력하도록 수정
 - 범례에 피버 아이템과 길이 5 조건부 게이트 설명 추가
 - 미션보드의 B, +, -, G 기호 색을 실제 게임 화면의 뱀, 성장 아이템, 독 아이템, 게이트 색과 일치화
+- + 아이템은 초록 배경/진한 노란색 전각 기호, - 아이템은 빨간 배경/흰색 전각 기호, 조건부 게이트는 검은 배경/분홍 !로 표시하도록 수정
+- 미션보드의 +, - 기호는 배경 없이 초록색/빨간색 텍스트로 표시하도록 분리
 - 게임오버 화면 문구를 R Restart / Q Quit 형태로 바꾸고 입력된 키를 반환하도록 변경
 - 게임오버 화면에서 R 또는 Q가 들어올 때까지 기다리게 하여 재시작 입력이 다른 키 입력에 묻히지 않도록 변경
 - 성장 아이템, 독 아이템, 일반 게이트, 조건부 게이트 기호를 +, -, G, !로 통일
